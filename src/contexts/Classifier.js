@@ -417,8 +417,49 @@ function ClassifierProvider({ children }) {
     getNews();
   }, []);
 
-  const processUrl = (url, newsSite) => {
-    processNews(url, newsSite);
+  const processUrl = async (url, newsSite) => {
+    try {
+      const response = (await processNews(url, newsSite)).data;
+      console.log(response);
+    } catch (err) {
+      // TODO: handle error
+      // https://www.intricatecloud.io/2020/03/how-to-handle-api-errors-in-your-web-app-using-axios/
+      if (err.response) {
+        // client received an error response (5xx, 4xx)
+        switch (err.response.status) {
+          case 400: // Bad request
+            enqueueSnackbar('Bad request', {
+              variant: 'warning',
+            });
+            break;
+          case 404: // Not found
+            enqueueSnackbar('Invalid request', {
+              variant: 'error',
+            });
+            break;
+          case 408: // Timeout
+            enqueueSnackbar('Request took too long, please try again', {
+              variant: 'warning',
+            });
+            break;
+          case 500: // Internal Server Error
+            enqueueSnackbar('Something went wrong, please try again', {
+              variant: 'error',
+            });
+            break;
+          default:
+            console.log(err.response);
+        }
+      } else if (err.request) {
+        // client never received a response, or request never left
+        enqueueSnackbar("Can't reach server", {
+          variant: 'error',
+        });
+      } else {
+        // anything else
+        console.log(err);
+      }
+    }
   };
 
   const listNews = (category, index) => {
